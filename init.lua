@@ -78,6 +78,38 @@ local function selectparentnode(doc)
   end
 end
 
+local function selectchildnode(doc)
+  local node = getcurrentnode(doc)
+  local child = node:child(0)
+  if child then
+    selectnode(doc, child)
+  end
+end
+
+local function selectsibling(which)
+  local methodname = which .. "_sibling"
+  return function(doc)
+    local node, parent = getcurrentnode(doc)
+    local sibling = node[methodname](node)
+    if not sibling then
+      local noderange = range.fromnode(node)
+      for childnode in parent:children() do
+        local childrange = range.fromnode(childnode)
+        if range.same(childrange, noderange) then
+          sibling = childnode[methodname](childnode)
+          break
+        end
+      end
+    end
+    if sibling then
+      selectnode(doc, sibling)
+    end
+  end
+end
+
+local selectnextsibling = selectsibling("next")
+local selectprevioussibling = selectsibling("prev")
+
 local function treesitteddoc()
   local view = core.active_view
   if view:is(docview) then
@@ -89,5 +121,8 @@ end
 command.add(treesitteddoc, {
   ["monkey:select-current-node"] = selectcurrentnode,
   ["monkey:select-parent-node"] = selectparentnode,
+  ["monkey:select-child-node"] = selectchildnode,
+  ["monkey:select-next-sibling-node"] = selectnextsibling,
+  ["monkey:select-previous-sibling-node"] = selectprevioussibling,
 })
 
